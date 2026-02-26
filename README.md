@@ -5,7 +5,7 @@
 
 ## TODO 
 
-    - [ ]~~add parentheses support~~
+    - [X] add parentheses support
     - [ ] if we use floating pointing numbers I cannot even parse it :(  fix this 
     - [ ] better error reporting 
     - [ ] add more features, like exp(^), mod(%), factorial(!), trig functions,etc.  
