@@ -1,9 +1,57 @@
 #include "tokenizer.h"
+#define MAX_TOKEN_ARRAY_COUNT 128
 
 static tokenizer_state *state;
 
-bool       is_digit(char *atom);
-int        convert_to_digit(char *atom);
+bool is_digit(char *atom);
+int  convert_to_digit(char *atom);
+
+// error reproting: i dont know if this should be in the tokenizer file :)
+typedef enum error_type
+{
+    GENERAL        = 0,
+    INVALID_SYNTAX = 1,
+} error_type;
+
+void error_report(const char *error, token *token, error_type type)
+{
+    char *exp    = state->exp;
+    int   length = state->exp_length;
+
+    switch (type)
+    {
+    case GENERAL: {
+        printf("%s\n", error);
+    }
+    break;
+    case INVALID_SYNTAX: {
+        int starting_ind = token->starting_ind;
+        int ending_ind   = token->ending_ind;
+
+        if (starting_ind > length || ending_ind > length)
+        {
+            printf("index out of bounds for tokens %d\n", __LINE__);
+            DEBUG_BREAK;
+        }
+
+        char temp         = exp[starting_ind];
+        exp[starting_ind] = '\0';
+        printf("%s: %s", error, exp);
+        exp[starting_ind] = temp;
+        
+        temp = exp[ending_ind + 1];
+        printf("\e[31m%s\e[0m", &exp[starting_ind]);
+
+        if(temp != '\0')
+        {
+            exp[ending_ind + 1] = temp;
+            printf("%s", &exp[ending_ind + 1]);
+        }
+        printf("\n");
+    }
+    break;
+    }
+}
 
 int token_get_precedence(token_type op)
 {
@@ -28,8 +76,8 @@ int token_get_precedence(token_type op)
     }
     return INT_MIN;
 }
-// this is char* because we are still doing the lexial analysis part: we want to convert  
-bool token_is_operator(char* token)
+// this is char* because we are still doing the lexial analysis part: we want to convert
+bool token_is_operator(char *token)
 {
     if (token == NULL)
     {
@@ -52,7 +100,6 @@ bool token_is_operator(char* token)
     }
     return false;
 }
-
 
 const char *token_get_string(token *token)
 {
@@ -124,7 +171,7 @@ token *token_peek_next()
     return &state->tokens[index + 1];
 }
 
-void init_tokenizer(arena *arena, char *exp)
+bool init_tokenizer(arena *arena, char *exp)
 {
     // if we have never initialized this then initialize it.
     if (exp == NULL)
@@ -137,37 +184,49 @@ void init_tokenizer(arena *arena, char *exp)
         state = arena_alloc(arena, sizeof(tokenizer_state));
     }
     state->exp           = exp;
+    state->exp_length    = strlen(exp);
     state->curr_token    = 0;
     state->tokens_length = 0;
 
     // convert exp into tokens
 
-    int   index = 0;
-    token token = {.type = TOKEN_END, .value = INT_MIN};
-
-    int length = strlen(exp);
+    int index = 0;
 
     char *ptr = exp;
 
+    // stage 1: process the exp into individual tokens
+
+    token temp                               = {.type = TOKEN_END, .value = INT_MIN};
+    token temp_tokens[MAX_TOKEN_ARRAY_COUNT] = {temp};
+
     do
     {
+        int starting = ptr - exp;
         if (is_digit(ptr))
         {
+            int ending = starting;
+
             int value = convert_to_digit(ptr);
             ptr++;
+
             while (ptr != NULL && *ptr != '\n' && *ptr != '\0' && is_digit(ptr))
             {
                 value *= 10;
                 value += convert_to_digit(ptr);
                 ptr++;
+                ending++;
             }
-            token.type  = TOKEN_INT;
-            token.value = value;
+            temp.type         = TOKEN_INT;
+            temp.value        = value;
+            temp.starting_ind = starting;
+            temp.ending_ind   = ending;
         }
         else if (token_is_operator(ptr))
         {
-            token.type  = (token_type)*ptr;
-            token.value = INT_MIN;
+            temp.type         = (token_type)*ptr;
+            temp.value        = INT_MIN;
+            temp.starting_ind = starting;
+            temp.ending_ind   = starting;
             ptr++;
         }
         else if (*ptr == ' ')
@@ -175,10 +234,61 @@ void init_tokenizer(arena *arena, char *exp)
             ptr++;
             continue;
         }
-        state->tokens[index++] = token;
+        temp_tokens[index++] = temp;
     } while (ptr != NULL && *ptr != '\0' && *ptr != '\n');
 
-    state->tokens_length = index;
+    // check if the tokens are syntactically valid or not:
+    // also merge tokens if they are the same:
+    // like rather -2 being TOKEN_MINUS and TOKEN_INT merge them to be a negative TOKEN_INT
+
+    int len        = index;
+    int open_paren = 0;
+    for (int i = 0; i < len; i++)
+    {
+        token *temp_token = &temp_tokens[i];
+        switch (temp_token->type)
+        {
+            break;
+        case TOKEN_INT: {
+        }
+        break;
+        case TOKEN_MINUS: {
+        }
+        break;
+        case TOKEN_PLUS: {
+            
+        }
+        break;
+        case TOKEN_MULTIPLICATION: {
+        }
+        break;
+        case TOKEN_DIVISION: {
+        }
+        break;
+        case TOKEN_EXPONENT: {
+        }
+        break;
+        case TOKEN_OPEN_PAREN: {
+            open_paren++;
+        }
+        break;
+        case TOKEN_CLOSE_PAREN: {
+            open_paren--;
+
+            if (open_paren == -1)
+            {
+                error_report("Misplaced Close Paren", temp_token, INVALID_SYNTAX);
+                return false;
+            }
+        }
+        break;
+        case TOKEN_END:
+        default: {
+        }
+        break;
+        }
+    }
+    return true;
 }
 
 bool is_digit(char *atom)

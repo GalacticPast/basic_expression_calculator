@@ -12,7 +12,6 @@
 #define INT_MAX 2147483647
 #define true 1
 #define false 0
-#define MAX_TOKEN_ARRAY_COUNT 128
 #define MAX(n, m) (int)n >= (int)m ? (int)n : (int)m
 #define ASSERT(m, n)                                                                                                   \
     if ((int)m != (int)n)                                                                                              \

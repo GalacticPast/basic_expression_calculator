@@ -188,8 +188,8 @@ int tree_dfs(tree_node *tree)
 int evaluate(arena *arena, char *exp)
 {
     main_arena = arena;
-    init_tokenizer(arena, exp);
-
+    bool res = init_tokenizer(arena, exp);
+    if(res == false)return INT_MIN;
     tree_node *tree = parse(0.0);
 
     int result = tree_dfs(tree);

@@ -103,6 +103,10 @@ int main()
             break;
 
         int ans = evaluate(main_arena, expression);
+        if(ans == INT_MIN)
+        {
+            continue;
+        }
         printf(">>> %d\n", ans);
     }
 

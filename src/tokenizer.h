@@ -1,6 +1,6 @@
 #pragma once
-#include "defines.h"
 #include "arena.h"
+#include "defines.h"
 
 #define MAX_TOKEN_ARRAY_COUNT 128
 // I realized we need this because this will keep track of where we are in terms of parsing
@@ -33,6 +33,10 @@ typedef token_type operator;
 typedef struct token
 {
     token_type type;
+    // where does it start in the original exp ------v
+    int starting_ind; // needed for error reproting
+    // where does it end in the original exp --------^
+    int ending_ind;
     // only for the TOKEN_INT type
     int value;
 } token;
@@ -41,6 +45,7 @@ typedef struct tokenizer_state
 {
     // original expression
     char *exp;
+    int   exp_length;
     int   curr_token;
     int   tokens_length;
     // we could do a sliding window approach but since I dont expect anyone to write
@@ -54,4 +59,5 @@ int         token_get_atom();
 void        token_consume();
 token      *token_peek();
 token      *token_peek_next();
-void        init_tokenizer(arena* arena, char* exp);
+// this returs false it there was an syntax error  in the expression
+bool init_tokenizer(arena *arena, char *exp);
