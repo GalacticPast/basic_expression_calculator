@@ -83,13 +83,6 @@ tree_node *parse(float parent_precedence)
         token *token = token_peek();
         if (token->type == TOKEN_END || token->type == TOKEN_CLOSE_PAREN)
             break;
-        if (token->type == TOKEN_INT)
-        {
-            // this means there was two consequetive integers seperated by a whitespace: for example 0 + 1 2 ...
-            // this is an error                                                                           ^
-            printf("Invalid Expression: there was two consequetive integers. Please retry again.\n");
-            DEBUG_BREAK;
-        }
 
         operator op         = (operator)token->type;
         int      precedence = token_get_precedence(op);

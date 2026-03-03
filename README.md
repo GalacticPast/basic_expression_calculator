@@ -6,7 +6,7 @@
 ## TODO 
 
     - [X] add parentheses support
+    - [X] better error reporting 
     - [ ] if we use floating pointing numbers I cannot even parse it :(  fix this 
-    - [ ] better error reporting 
     - [ ] add more features, like exp(^), mod(%), factorial(!), trig functions,etc.  
     - [ ] visualize the trees 
