@@ -7,6 +7,7 @@
 
     - [X] add parentheses support
     - [X] better error reporting 
-    - [ ] if we use floating pointing numbers I cannot even parse it :(  fix this 
+    - [X] if we use floating pointing numbers I cannot even parse it :(  fix this 
+        - well if we put a really long floating point for example 0.22234234123412341243 it might underflow or overflow. 
     - [ ] add more features, like exp(^), mod(%), factorial(!), trig functions,etc.  
     - [ ] visualize the trees 

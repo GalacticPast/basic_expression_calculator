@@ -91,6 +91,7 @@ int main()
 
     arena arena = arena_init(&array, size);
     main_arena  = &arena;
+        float epsilon = 0.0000001;
 
     // run_tests();
     printf("Type in your expression: \n");
@@ -102,12 +103,20 @@ int main()
         if (is_equal("exit\n", expression))
             break;
 
-        int ans = evaluate(main_arena, expression);
+        float ans = evaluate(main_arena, expression);
         if(ans == INT_MIN)
         {
             continue;
         }
-        printf(">>> %d\n", ans);
+        float ans_floor = floor(ans);
+        if(fabs(ans_floor - ans) < epsilon)
+        {
+            printf("%d\n", (int)ans);
+        }
+        else
+        {
+            printf("%.2f\n", ans);
+        }
     }
 
     return 0;

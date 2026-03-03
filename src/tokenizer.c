@@ -86,6 +86,7 @@ bool char_is_operator(char *token)
         case TOKEN_EXPONENT:
         case TOKEN_OPEN_PAREN:
         case TOKEN_CLOSE_PAREN:
+        case TOKEN_DECIMAL_POINT:
             return true;
         default:
             return false;
@@ -234,15 +235,71 @@ bool init_tokenizer(arena *arena, char *exp)
         }
         else
         {
-            ERROR_REPORT("Invalid exp", &(token){},GENERAL);
+            ERROR_REPORT("Invalid exp", &(token){}, GENERAL);
         }
         temp_tokens[index++] = temp;
     } while (ptr != NULL && *ptr != '\0' && *ptr != '\n');
 
-    // stage 2: check for syntax errors : I dont know if the tokenizer should be doing this but oh well. Im still
+    // stage 2: check for floating point values, if there are merge them. And also check for wrong floating point tokens
+    // for example a.b....c
+    int len = index;
+    token floating_point[MAX_TOKEN_ARRAY_COUNT] = {};
+    
+    if(temp_tokens[0].type == TOKEN_DECIMAL_POINT)
+    {
+        ERROR_REPORT("Misplaced decimal point", &temp_tokens[0], INVALID_SYNTAX); 
+    }
+
+    for (int i = 1; i <= len; i++)
+    {
+
+        token *curr_token = &temp_tokens[i];
+        token *next_token = &temp_tokens[i + 1];
+        token *prev_token = &temp_tokens[i - 1] ;
+
+        if (curr_token->type == TOKEN_DECIMAL_POINT)
+        {
+            if(prev_token->type != TOKEN_INT || next_token->type != TOKEN_INT)
+            {
+                ERROR_REPORT("Misplaced decimal point", curr_token, INVALID_SYNTAX); 
+            }
+            char *end_ptr;
+            float num = strtof(&state->exp[prev_token->starting_ind], &end_ptr);
+            if(*end_ptr == TOKEN_DECIMAL_POINT)
+            {
+                ERROR_REPORT("Floating point error", curr_token, INVALID_SYNTAX);
+            }
+
+            prev_token->type = TOKEN_INT;
+            prev_token->value = num;
+            prev_token->ending_ind = next_token->ending_ind;
+            
+            //invalid the next two tokens
+            curr_token->type = TOKEN_END;
+            next_token->type = TOKEN_END;
+        }
+    }
+
+    int floating_ind = 0;
+    for (int i = 0; i <= len; i++)
+    {
+        token* curr_token = &temp_tokens[i];
+        
+        if(curr_token->type != TOKEN_END)
+        {
+            floating_point[floating_ind++] = temp_tokens[i];
+        }
+    }
+
+    for (int i = 0; i <= floating_ind ; i++)
+    {
+        temp_tokens[i] = floating_point[i];
+    }
+    len = floating_ind; 
+   
+    // stage 3: check for syntax errors : I dont know if the tokenizer should be doing this but oh well. Im still
     // learning 02.03.2026 @GalacticPast
 
-    int len        = index;
     int open_paren = 0;
     for (int i = 0; i <= len; i++)
     {
@@ -339,12 +396,15 @@ bool init_tokenizer(arena *arena, char *exp)
                 }
             }
             break;
+            case TOKEN_DECIMAL_POINT: {
+            }
+            break;
             case TOKEN_EXPONENT: {
             }
             break;
             case TOKEN_OPEN_PAREN: {
                 open_paren++;
-                if(is_prev_operator == false)
+                if (is_prev_operator == false)
                 {
                     ERROR_REPORT("Expected an operator before an open parenthesis", curr_token, INVALID_SYNTAX);
                 }
@@ -365,9 +425,9 @@ bool init_tokenizer(arena *arena, char *exp)
                 {
                     ERROR_REPORT("Expected an operator", next_token, INVALID_SYNTAX);
                 }
-                else if(token_is_operator(next_token) == false && next_token->type != TOKEN_END)
+                else if (token_is_operator(next_token) == false && next_token->type != TOKEN_END)
                 {
-                    ERROR_REPORT("Expected an operator", curr_token, INVALID_SYNTAX); 
+                    ERROR_REPORT("Expected an operator", curr_token, INVALID_SYNTAX);
                 }
             }
             break;

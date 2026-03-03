@@ -17,6 +17,7 @@ typedef enum token_type
 {
     // end of expression token,
     TOKEN_END            = 0,
+    // Integer but could be real numbers too. Just a name not a literal integer.
     TOKEN_INT            = 1,
     TOKEN_MINUS          = '-',
     TOKEN_PLUS           = '+',
@@ -25,6 +26,8 @@ typedef enum token_type
     TOKEN_EXPONENT       = 'e',
     TOKEN_OPEN_PAREN     = '(',
     TOKEN_CLOSE_PAREN    = ')',
+    // special type to indicate that its an floating point number
+    TOKEN_DECIMAL_POINT  = '.',
     // special type to indicate the leaf node of the tree
     TOKEN_LEAF_NODE      = 1000
 } token_type;
@@ -38,7 +41,7 @@ typedef struct token
     // where does it end in the original exp --------^
     int ending_ind;
     // only for the TOKEN_INT type
-    int value;
+    double value;
 } token;
 
 typedef struct tokenizer_state
@@ -48,6 +51,8 @@ typedef struct tokenizer_state
     int   exp_length;
     int   curr_token;
     int   tokens_length;
+    // if there is a floating point integer then the whole calculator goes into the floating point 
+    int    floating_point;
     // we could do a sliding window approach but since I dont expect anyone to write
     // a mathematical expression larger then 124 characters :)
     token tokens[MAX_TOKEN_ARRAY_COUNT];

@@ -18,7 +18,7 @@ tree_node *build_binary_operator_tree(tree_node *left, tree_node *right, operato
     return tree;
 }
 
-tree_node *get_new_tree_node(int value, operator op)
+tree_node *get_new_tree_node(float value, operator op)
 {
     tree_node *node = arena_alloc(main_arena, sizeof(tree_node));
 
@@ -137,7 +137,7 @@ void tree_bfs(tree_node *tree, tree_node *array, int parent_array_index)
 }
 */
 
-int tree_dfs(tree_node *tree)
+float tree_dfs(tree_node *tree)
 {
     if (tree == NULL)
         return 0;
@@ -145,9 +145,9 @@ int tree_dfs(tree_node *tree)
     {
         return tree->value;
     }
-    int left   = tree_dfs(tree->left);
-    int right  = tree_dfs(tree->right);
-    int result = 0;
+    float left   = tree_dfs(tree->left);
+    float right  = tree_dfs(tree->right);
+    float result = 0;
 
     switch (tree->operator)
     {
@@ -164,6 +164,11 @@ int tree_dfs(tree_node *tree)
     }
     break;
     case TOKEN_DIVISION: {
+        if(right == 0)
+        {
+            printf("DIVIDE BY ZERO\n");
+            DEBUG_BREAK;
+       }
         result = left / right;
     }
     break;
@@ -178,14 +183,14 @@ int tree_dfs(tree_node *tree)
     return result;
 }
 
-int evaluate(arena *arena, char *exp)
+float evaluate(arena *arena, char *exp)
 {
     main_arena = arena;
     bool res = init_tokenizer(arena, exp);
     if(res == false)return INT_MIN;
     tree_node *tree = parse(0.0);
 
-    int result = tree_dfs(tree);
+    float result = tree_dfs(tree);
 
     return result;
 }
