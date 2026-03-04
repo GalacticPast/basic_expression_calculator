@@ -59,10 +59,6 @@ int token_get_precedence(token_type op)
             return 2;
         case TOKEN_EXPONENT:
             return 5;
-        case TOKEN_OPEN_PAREN:
-            return 0;
-        case TOKEN_CLOSE_PAREN:
-            return 6;
         default:
             return 0.0;
     }
@@ -308,7 +304,17 @@ bool init_tokenizer(arena *arena, char *exp)
         bool   is_prev_operator = true;
         if (i != 0)
         {
-            is_prev_operator = token_is_operator(&temp_tokens[i - 1]);
+            // if its a close paren then ignore it. I mean I shouldve designed this better. 
+            // Because token_is_operator(')') return true and because we cant have an operator token after another operator token.
+            // I had to add this weird edge case cause You are supposed to be able do (a + b) * c, kind of calculations. 
+            if(temp_tokens[i - 1].type == TOKEN_CLOSE_PAREN)
+            {
+                is_prev_operator = false;
+            }
+            else
+            {
+                is_prev_operator = token_is_operator(&temp_tokens[i - 1]);
+            }
         }
 
         switch (curr_token->type)
@@ -385,7 +391,7 @@ bool init_tokenizer(arena *arena, char *exp)
                     {
                         ERROR_REPORT("Consequetive tokens", curr_token, INVALID_SYNTAX);
                     }
-                    else
+                    else 
                     {
                         ERROR_REPORT("Unary expression with this type not allowed.", curr_token, INVALID_SYNTAX);
                     }

@@ -1,13 +1,30 @@
 # basic_expression_calculator
-## Description
 
-    Simple calculator but with a parser so that you can do 1 + 2 * 3 * 3 * 3 / 2 + 5 kind of calculations. 
+A simple math parser that handles complex strings like `1 + 2 * 3 / 2 + 5` instead of just one operation at a time.
 
-## TODO 
+##  Features
+* **Order of Operations:** Correctly handles PEMDAS/BODMAS.
+* **Parentheses:** Supports nested logic like `(1 + 2) * 3`.
+* **Decimals:** Supports 32-bit floating-point numbers (e.g., `10.5 / 2`).
+* **Error Handling:** Clearer feedback for syntax mistakes.
 
-    - [X] add parentheses support
-    - [X] better error reporting 
-    - [X] if we use floating pointing numbers I cannot even parse it :(  fix this 
-        - well if we put a really long floating point for example 0.22234234123412341243 it might underflow or overflow. 
-    - [ ] add more features, like exp(^), mod(%), factorial(!), trig functions,etc.  
-    - [ ] visualize the trees 
+##  How it works
+1. **Lexer:** Breaks your string into tokens (numbers and symbols).
+2. **Parser:** Builds a tree based on math rules.
+3. **Evaluator:** Runs through the tree to give you the answer.
+
+##  Setup & Usage
+1. **Clone:** `git clone https://github.com/GalacticPast/basic_expression_calculator.git`
+2. **Build:**
+* **Linux:** `./build.sh`
+* **Windows:** `./build.bat`
+
+
+##  Roadmap / TODO
+- [x] Add parentheses support.
+- [x] Better error reporting.
+- [x] Basic 32-bit float support.
+- [ ] **Fix:** Support for very long floats (e.g., `0.22234234123412341243`) to prevent overflow.
+- [ ] **New Features:** Add `^` (power), `%` (mod), `!` (factorial), and trig functions.
+- [ ] **Visualize:** Create a way to see the calculation tree.
+
