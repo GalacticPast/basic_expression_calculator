@@ -115,6 +115,7 @@ int main()
         {
             printf("%.2f\n", ans);
         }
+        arena_reset(main_arena);
     }
     return 0;
 }
