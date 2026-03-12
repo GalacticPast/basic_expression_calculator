@@ -9,7 +9,7 @@ tree_node *build_binary_operator_tree(tree_node *left, tree_node *right, operato
 {
     tree_node *tree = arena_alloc(main_arena, sizeof(tree_node));
 
-    tree->value    = INT_MIN;
+    tree->value    = 0;
     tree->operator = op;
 
     tree->left  = left;
@@ -47,11 +47,6 @@ tree_node *parse_leaf()
         left       = parse(0.0);
         // now the curr_token should be ')'
         curr_token = token_peek();
-        if (curr_token->type != TOKEN_CLOSE_PAREN)
-        {
-            printf("Expected TOKEN_CLOSE_PAREN, but got %s\n", token_get_string(curr_token));
-            DEBUG_BREAK;
-        }
         // consume the ')'
         token_consume();
         return left;
@@ -61,12 +56,7 @@ tree_node *parse_leaf()
     {
         // if this is an int token then the next token has to be an operator and that operator cannot be a OPEN_PAREN
         token *next_token = token_peek_next();
-        if (next_token->type == TOKEN_OPEN_PAREN)
-        {
-            printf("Expected an operator but got an %s\n", token_get_string(next_token));
-            DEBUG_BREAK;
-        }
-        left = get_new_tree_node(curr_token->value, TOKEN_LEAF_NODE);
+        left = get_new_tree_node(curr_token->value, TOKEN_INT);
         token_consume();
         return left;
     }
@@ -141,7 +131,7 @@ float tree_dfs(tree_node *tree)
 {
     if (tree == NULL)
         return 0;
-    if (tree->operator == TOKEN_LEAF_NODE)
+    if (tree->operator == TOKEN_INT)
     {
         return tree->value;
     }
@@ -187,7 +177,7 @@ float evaluate(arena *arena, char *exp)
 {
     main_arena = arena;
     bool res = init_tokenizer(arena, exp);
-    if(res == false)return INT_MIN;
+    if(res == false)return -1;
     tree_node *tree = parse(0.0);
 
     float result = tree_dfs(tree);

@@ -28,8 +28,6 @@ typedef enum token_type
     TOKEN_CLOSE_PAREN    = ')',
     // special type to indicate that its an floating point number
     TOKEN_DECIMAL_POINT  = '.',
-    // special type to indicate the leaf node of the tree
-    TOKEN_LEAF_NODE      = 1000
 } token_type;
 typedef token_type operator;
 

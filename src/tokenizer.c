@@ -62,7 +62,7 @@ int token_get_precedence(token_type op)
         default:
             return 0.0;
     }
-    return INT_MIN;
+    return -1;
 }
 // this is char* because we are still doing the lexial analysis part: we want to convert
 
@@ -132,7 +132,7 @@ int token_get_atom()
     token *token = &state->tokens[index];
     if (token->type == TOKEN_END)
     {
-        return INT_MIN;
+        return 0;
     }
     if (token->type != TOKEN_INT)
     {
@@ -173,15 +173,12 @@ bool init_tokenizer(arena *arena, char *exp)
         printf("Expression is NULL\n");
         DEBUG_BREAK;
     }
-    if (state == NULL)
-    {
-        state = arena_alloc(arena, sizeof(tokenizer_state));
-    }
+    state = arena_alloc(arena, sizeof(tokenizer_state));
     state->exp           = exp;
     state->exp_length    = strlen(exp);
     state->curr_token    = 0;
     state->tokens_length = 0;
-
+    
     // convert exp into tokens
 
     int index = 0;
@@ -190,7 +187,7 @@ bool init_tokenizer(arena *arena, char *exp)
 
     // stage 1: process the exp into individual tokens
 
-    token temp                               = {.type = TOKEN_END, .value = INT_MIN};
+    token temp                               = {.type = TOKEN_END, .value = 0};
     token temp_tokens[MAX_TOKEN_ARRAY_COUNT] = {temp};
 
     do
@@ -219,7 +216,7 @@ bool init_tokenizer(arena *arena, char *exp)
         {
 
             temp.type         = (token_type)*ptr;
-            temp.value        = INT_MIN;
+            temp.value        = 0;
             temp.starting_ind = starting;
             temp.ending_ind   = starting + 1;
             ptr++;
@@ -341,7 +338,7 @@ bool init_tokenizer(arena *arena, char *exp)
                         next_token->value *= -1;
                         // invalidate this token
                         curr_token->type   = TOKEN_END;
-                        curr_token->value  = INT_MIN;
+                        curr_token->value  = 0;
                         continue;
                     }
                     // this means we have an expression like this a -- b
@@ -366,7 +363,7 @@ bool init_tokenizer(arena *arena, char *exp)
                     {
                         // invalidate this token
                         curr_token->type  = TOKEN_END;
-                        curr_token->value = INT_MIN;
+                        curr_token->value = 0;
                         continue;
                     }
                     // this means we have an expression like this a -- b

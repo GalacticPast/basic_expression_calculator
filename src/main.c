@@ -5,7 +5,6 @@
 static arena           *main_arena;
 static tokenizer_state *token_state;
 
-
 int get_terminal_width(void)
 {
     struct winsize w;
@@ -35,7 +34,7 @@ char *split(char *expression, int length)
     return NULL;
 }
 
-void run_tests(arena* arena)
+void run_tests(arena *arena)
 {
     const char *file_name = "src/tests.txt";
 
@@ -46,19 +45,20 @@ void run_tests(arena* arena)
         DEBUG_BREAK;
     }
 
-    char expression[124] = {};
-    int  expected_result = INT_MIN;
-    int  count           = 1;
+    char  expression[124] = {};
+    float expected_result = -1;
+    int   count           = 1;
+    float epsilon         = 0.0001;
     while (fgets(expression, 123, file) != NULL)
     {
         char *split_exp = split(expression, 123);
         *split_exp      = '\0';
-        expected_result = atoi(split_exp + 1);
+        expected_result = atof(split_exp + 1);
 
-        printf("No %d -> Exp: %s, exp result: %d", count, expression, expected_result);
-        int ans = evaluate(arena, expression);
-        printf(",got: %d\n", ans);
-        ASSERT(expected_result, ans);
+        printf("No %d -> Exp: %s, exp result: %3f", count, expression, expected_result);
+        float ans = evaluate(arena, expression);
+        printf(",got: %2f\n", ans);
+        ASSERT(expected_result, ans, 0.0001);
         arena_reset(main_arena);
         token_state = NULL;
         count++;
@@ -89,11 +89,13 @@ int main()
     int  size = 10 * 1024;
     char array[size];
 
-    arena arena = arena_init(&array, size);
-    main_arena  = &arena;
-        float epsilon = 0.0000001;
+    arena arena   = arena_init(&array, size);
+    main_arena    = &arena;
+    float epsilon = 0.0000001;
+#if 0
+     run_tests(&arena);
+#endif
 
-    // run_tests();
     printf("Type in your expression: \n");
     while (true)
     {
@@ -103,13 +105,9 @@ int main()
         if (is_equal("exit\n", expression))
             break;
 
-        float ans = evaluate(main_arena, expression);
-        if(ans == INT_MIN)
-        {
-            continue;
-        }
+        float ans       = evaluate(main_arena, expression);
         float ans_floor = floor(ans);
-        if(fabs(ans_floor - ans) < epsilon)
+        if (fabs(ans_floor - ans) < epsilon)
         {
             printf("%d\n", (int)ans);
         }
@@ -118,6 +116,5 @@ int main()
             printf("%.2f\n", ans);
         }
     }
-
     return 0;
 }
