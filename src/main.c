@@ -5,14 +5,6 @@
 static arena           *main_arena;
 static tokenizer_state *token_state;
 
-int get_terminal_width(void)
-{
-    struct winsize w;
-    ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-
-    return w.ws_col; // make sure your main returns int
-}
-
 char *split(char *expression, int length)
 {
     if (expression == NULL)
