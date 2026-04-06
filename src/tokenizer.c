@@ -1,10 +1,11 @@
 #include "tokenizer.h"
+#include <stdlib.h>
 #define MAX_TOKEN_ARRAY_COUNT 128
 
 static tokenizer_state *state;
 
-bool is_digit(char *atom);
-int  convert_to_digit(char *atom);
+b8  is_digit(char *atom);
+s32 convert_to_digit(char *atom);
 #define ERROR_REPORT(error, token, type)                                                                               \
     {                                                                                                                  \
         error_report(error, token, type);                                                                              \
@@ -20,7 +21,7 @@ typedef enum error_type
 void error_report(const char *error, token *token, error_type type)
 {
     char *exp    = state->exp;
-    int   length = state->exp_length;
+    s32   length = state->exp_length;
 
     switch (type)
     {
@@ -29,8 +30,8 @@ void error_report(const char *error, token *token, error_type type)
         }
         break;
         case INVALID_SYNTAX: {
-            int starting_ind = token->starting_ind;
-            int ending_ind   = token->ending_ind;
+            s32 starting_ind = token->starting_ind;
+            s32 ending_ind   = token->ending_ind;
 
             printf("%s: ", error);
 
@@ -45,7 +46,7 @@ void error_report(const char *error, token *token, error_type type)
     }
 }
 
-int token_get_precedence(token_type op)
+s32 token_get_precedence(token_type op)
 {
     switch (op)
     {
@@ -66,7 +67,7 @@ int token_get_precedence(token_type op)
 }
 // this is char* because we are still doing the lexial analysis part: we want to convert
 
-bool char_is_operator(char *token)
+b8 char_is_operator(char *token)
 {
     if (token == NULL)
     {
@@ -90,7 +91,7 @@ bool char_is_operator(char *token)
     return false;
 }
 
-bool token_is_operator(token *token)
+b8 token_is_operator(token *token)
 {
     return char_is_operator((char *)&token->type);
 }
@@ -126,9 +127,9 @@ const char *token_get_string(token *token)
     return "";
 }
 
-int token_get_atom()
+s32 token_get_atom()
 {
-    int    index = state->curr_token;
+    s32    index = state->curr_token;
     token *token = &state->tokens[index];
     if (token->type == TOKEN_END)
     {
@@ -139,7 +140,7 @@ int token_get_atom()
         printf("Expected TOKEN_TYPE INT but got %s\n", token_get_string(token));
         DEBUG_BREAK;
     }
-    int value = token->value;
+    s32 value = token->value;
     return value;
 }
 
@@ -150,13 +151,13 @@ void token_consume()
 
 token *token_peek()
 {
-    int index = state->curr_token;
+    s32 index = state->curr_token;
     return &state->tokens[index];
 }
 
 token *token_peek_next()
 {
-    int index = state->curr_token;
+    s32 index = state->curr_token;
     if (index + 1 > state->tokens_length)
     {
         // return 'END OF EXP' token;
@@ -165,7 +166,7 @@ token *token_peek_next()
     return &state->tokens[index + 1];
 }
 
-bool init_tokenizer(arena *arena, char *exp)
+b8 init_tokenizer(db_arena *arena, char *exp)
 {
     // if we have never initialized this then initialize it.
     if (exp == NULL)
@@ -173,15 +174,15 @@ bool init_tokenizer(arena *arena, char *exp)
         printf("Expression is NULL\n");
         DEBUG_BREAK;
     }
-    state = arena_alloc(arena, sizeof(tokenizer_state));
+    state                = db_arena_alloc(arena, sizeof(tokenizer_state));
     state->exp           = exp;
     state->exp_length    = strlen(exp);
     state->curr_token    = 0;
     state->tokens_length = 0;
-    
+
     // convert exp into tokens
 
-    int index = 0;
+    s32 index = 0;
 
     char *ptr = exp;
 
@@ -192,12 +193,12 @@ bool init_tokenizer(arena *arena, char *exp)
 
     do
     {
-        int starting = ptr - exp;
+        s32 starting = ptr - exp;
         if (is_digit(ptr))
         {
-            int ending = starting;
+            s32 ending = starting;
 
-            int value = convert_to_digit(ptr);
+            s32 value = convert_to_digit(ptr);
             ptr++;
 
             while (ptr != NULL && *ptr != '\n' && *ptr != '\0' && is_digit(ptr))
@@ -235,76 +236,77 @@ bool init_tokenizer(arena *arena, char *exp)
 
     // stage 2: check for floating point values, if there are merge them. And also check for wrong floating point tokens
     // for example a.b....c
-    int len = index;
+    s32   len                                   = index;
     token floating_point[MAX_TOKEN_ARRAY_COUNT] = {};
-    
-    if(temp_tokens[0].type == TOKEN_DECIMAL_POINT)
+
+    if (temp_tokens[0].type == TOKEN_DECIMAL_POINT)
     {
-        ERROR_REPORT("Misplaced decimal point", &temp_tokens[0], INVALID_SYNTAX); 
+        ERROR_REPORT("Misplaced decimal point", &temp_tokens[0], INVALID_SYNTAX);
     }
 
-    for (int i = 1; i <= len; i++)
+    for (s32 i = 1; i <= len; i++)
     {
 
         token *curr_token = &temp_tokens[i];
         token *next_token = &temp_tokens[i + 1];
-        token *prev_token = &temp_tokens[i - 1] ;
+        token *prev_token = &temp_tokens[i - 1];
 
         if (curr_token->type == TOKEN_DECIMAL_POINT)
         {
-            if(prev_token->type != TOKEN_INT || next_token->type != TOKEN_INT)
+            if (prev_token->type != TOKEN_INT || next_token->type != TOKEN_INT)
             {
-                ERROR_REPORT("Misplaced decimal point", curr_token, INVALID_SYNTAX); 
+                ERROR_REPORT("Misplaced decimal point", curr_token, INVALID_SYNTAX);
             }
             char *end_ptr;
             float num = strtof(&state->exp[prev_token->starting_ind], &end_ptr);
-            if(*end_ptr == TOKEN_DECIMAL_POINT)
+            if (*end_ptr == TOKEN_DECIMAL_POINT)
             {
                 ERROR_REPORT("Floating point error", curr_token, INVALID_SYNTAX);
             }
 
-            prev_token->type = TOKEN_INT;
-            prev_token->value = num;
+            prev_token->type       = TOKEN_INT;
+            prev_token->value      = num;
             prev_token->ending_ind = next_token->ending_ind;
-            
-            //invalid the next two tokens
+
+            // invalid the next two tokens
             curr_token->type = TOKEN_END;
             next_token->type = TOKEN_END;
         }
     }
 
-    int floating_ind = 0;
-    for (int i = 0; i <= len; i++)
+    s32 floating_ind = 0;
+    for (s32 i = 0; i <= len; i++)
     {
-        token* curr_token = &temp_tokens[i];
-        
-        if(curr_token->type != TOKEN_END)
+        token *curr_token = &temp_tokens[i];
+
+        if (curr_token->type != TOKEN_END)
         {
             floating_point[floating_ind++] = temp_tokens[i];
         }
     }
 
-    for (int i = 0; i <= floating_ind ; i++)
+    for (s32 i = 0; i <= floating_ind; i++)
     {
         temp_tokens[i] = floating_point[i];
     }
-    len = floating_ind; 
-   
+    len = floating_ind;
+
     // stage 3: check for syntax errors : I dont know if the tokenizer should be doing this but oh well. Im still
     // learning 02.03.2026 @GalacticPast
 
-    int open_paren = 0;
-    for (int i = 0; i <= len; i++)
+    s32 open_paren = 0;
+    for (s32 i = 0; i <= len; i++)
     {
         token *curr_token       = &temp_tokens[i];
         token *next_token       = &temp_tokens[i + 1];
-        bool   is_prev_operator = true;
+        b8     is_prev_operator = true;
         if (i != 0)
         {
-            // if its a close paren then ignore it. I mean I shouldve designed this better. 
-            // Because token_is_operator(')') return true and because we cant have an operator token after another operator token.
-            // I had to add this weird edge case cause You are supposed to be able do (a + b) * c, kind of calculations. 
-            if(temp_tokens[i - 1].type == TOKEN_CLOSE_PAREN)
+            // if its a close paren then ignore it. I mean I shouldve designed this better.
+            // Because token_is_operator(')') return true and because we cant have an operator token after another
+            // operator token. I had to add this weird edge case cause You are supposed to be able do (a + b) * c, kind
+            // of calculations.
+            if (temp_tokens[i - 1].type == TOKEN_CLOSE_PAREN)
             {
                 is_prev_operator = false;
             }
@@ -388,7 +390,7 @@ bool init_tokenizer(arena *arena, char *exp)
                     {
                         ERROR_REPORT("Consequetive tokens", curr_token, INVALID_SYNTAX);
                     }
-                    else 
+                    else
                     {
                         ERROR_REPORT("Unary expression with this type not allowed.", curr_token, INVALID_SYNTAX);
                     }
@@ -450,8 +452,8 @@ bool init_tokenizer(arena *arena, char *exp)
         ERROR_REPORT("Unclosed open Paren", &temp_tokens[len], INVALID_SYNTAX);
     }
 
-    int final_tokens_index = 0;
-    for (int i = 0; i < len; i++)
+    s32 final_tokens_index = 0;
+    for (s32 i = 0; i < len; i++)
     {
         if (temp_tokens[i].type != TOKEN_END)
         {
@@ -462,18 +464,18 @@ bool init_tokenizer(arena *arena, char *exp)
     return true;
 }
 
-bool is_digit(char *atom)
+b8 is_digit(char *atom)
 {
     if (atom == NULL)
     {
         printf("Expected an atom to check if it's digit but got NULL instead\n");
         DEBUG_BREAK;
     }
-    bool ans = (*atom >= '0' && *atom <= '9' ? 1 : 0);
+    b8 ans = (*atom >= '0' && *atom <= '9' ? 1 : 0);
     return ans;
 }
 
-int convert_to_digit(char *atom)
+s32 convert_to_digit(char *atom)
 {
     if (atom == NULL)
     {
@@ -485,6 +487,6 @@ int convert_to_digit(char *atom)
         printf("Expected the provided atom: %c, to be an digit.\n", *atom);
         DEBUG_BREAK;
     }
-    int digit = *atom - '0';
+    s32 digit = *atom - '0';
     return digit;
 }

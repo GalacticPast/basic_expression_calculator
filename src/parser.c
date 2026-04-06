@@ -1,13 +1,12 @@
 #include "parser.h"
-#include "defines.h"
 #include "tokenizer.h"
+#include <math.h>
 
-static arena* main_arena;
-
+static db_arena *main_arena;
 
 tree_node *build_binary_operator_tree(tree_node *left, tree_node *right, operator op)
 {
-    tree_node *tree = arena_alloc(main_arena, sizeof(tree_node));
+    tree_node *tree = db_arena_alloc(main_arena, sizeof(tree_node));
 
     tree->value    = 0;
     tree->operator = op;
@@ -18,9 +17,9 @@ tree_node *build_binary_operator_tree(tree_node *left, tree_node *right, operato
     return tree;
 }
 
-tree_node *get_new_tree_node(float value, operator op)
+tree_node *get_new_tree_node(f32 value, operator op)
 {
-    tree_node *node = arena_alloc(main_arena, sizeof(tree_node));
+    tree_node *node = db_arena_alloc(main_arena, sizeof(tree_node));
 
     node->operator = op;
     node->value    = value;
@@ -31,7 +30,7 @@ tree_node *get_new_tree_node(float value, operator op)
 }
 // refine this
 
-tree_node *parse(float parent_precedence);
+tree_node *parse(f32 parent_precedence);
 
 tree_node *parse_leaf()
 {
@@ -54,9 +53,9 @@ tree_node *parse_leaf()
 
     if (curr_token->type == TOKEN_INT)
     {
-        // if this is an int token then the next token has to be an operator and that operator cannot be a OPEN_PAREN
+        // if this is an s32 token then the next token has to be an operator and that operator cannot be a OPEN_PAREN
         token *next_token = token_peek_next();
-        left = get_new_tree_node(curr_token->value, TOKEN_INT);
+        left              = get_new_tree_node(curr_token->value, TOKEN_INT);
         token_consume();
         return left;
     }
@@ -64,7 +63,7 @@ tree_node *parse_leaf()
     return NULL;
 }
 
-tree_node *parse(float parent_precedence)
+tree_node *parse(f32 parent_precedence)
 {
     tree_node *left = parse_leaf();
 
@@ -75,7 +74,7 @@ tree_node *parse(float parent_precedence)
             break;
 
         operator op         = (operator)token->type;
-        int      precedence = token_get_precedence(op);
+        s32      precedence = token_get_precedence(op);
 
         if (precedence < parent_precedence)
             break;
@@ -90,17 +89,17 @@ tree_node *parse(float parent_precedence)
 }
 
 // this is going to flatten the tree
-int get_tree_height(tree_node *tree)
+s32 get_tree_height(tree_node *tree)
 {
     if (tree == NULL)
         return 1;
 
-    int left  = get_tree_height(tree->left) + 1;
-    int right = get_tree_height(tree->right) + 1;
-    return MAX(left, right);
+    s32 left  = get_tree_height(tree->left) + 1;
+    s32 right = get_tree_height(tree->right) + 1;
+    return db_max(left, right);
 }
 /*
-void tree_bfs(tree_node *tree, tree_node *array, int parent_array_index)
+void tree_bfs(tree_node *tree, tree_node *array, s32 parent_array_index)
 {
     if (tree == NULL)
         return;
@@ -110,8 +109,8 @@ void tree_bfs(tree_node *tree, tree_node *array, int parent_array_index)
         array_insert_element(array, tree, 0);
     }
 
-    int left_index  = 2 * parent_array_index + 1;
-    int right_index = 2 * parent_array_index + 2;
+    s32 left_index  = 2 * parent_array_index + 1;
+    s32 right_index = 2 * parent_array_index + 2;
 
     if (tree->left != NULL)
     {
@@ -127,7 +126,7 @@ void tree_bfs(tree_node *tree, tree_node *array, int parent_array_index)
 }
 */
 
-float tree_dfs(tree_node *tree)
+f32 tree_dfs(tree_node *tree)
 {
     if (tree == NULL)
         return 0;
@@ -135,52 +134,53 @@ float tree_dfs(tree_node *tree)
     {
         return tree->value;
     }
-    float left   = tree_dfs(tree->left);
-    float right  = tree_dfs(tree->right);
-    float result = 0;
+    f32 left   = tree_dfs(tree->left);
+    f32 right  = tree_dfs(tree->right);
+    f32 result = 0;
 
     switch (tree->operator)
     {
-    case TOKEN_MINUS: {
-        result = left - right;
-    }
-    break;
-    case TOKEN_PLUS: {
-        result = left + right;
-    }
-    break;
-    case TOKEN_MULTIPLICATION: {
-        result = left * right;
-    }
-    break;
-    case TOKEN_DIVISION: {
-        if(right == 0)
-        {
-            printf("DIVIDE BY ZERO\n");
-            DEBUG_BREAK;
-       }
-        result = left / right;
-    }
-    break;
-    case TOKEN_EXPONENT: {
-        result = pow(left, right);
-    }
-    break;
-    default: {
-    }
-    break;
+        case TOKEN_MINUS: {
+            result = left - right;
+        }
+        break;
+        case TOKEN_PLUS: {
+            result = left + right;
+        }
+        break;
+        case TOKEN_MULTIPLICATION: {
+            result = left * right;
+        }
+        break;
+        case TOKEN_DIVISION: {
+            if (right == 0)
+            {
+                printf("DIVIDE BY ZERO\n");
+                DEBUG_BREAK;
+            }
+            result = left / right;
+        }
+        break;
+        case TOKEN_EXPONENT: {
+            result = pow(left, right);
+        }
+        break;
+        default: {
+        }
+        break;
     }
     return result;
 }
 
-float evaluate(arena *arena, char *exp)
+f32 evaluate(db_arena *arena, char *exp)
 {
     main_arena = arena;
-    bool res = init_tokenizer(arena, exp);
-    if(res == false)return -1;
+    b8 res     = init_tokenizer(arena, exp);
+    if (res == false)
+        return -1;
     tree_node *tree = parse(0.0);
 
-    float result = tree_dfs(tree);
+    f32 result = tree_dfs(tree);
 
     return result;
 }

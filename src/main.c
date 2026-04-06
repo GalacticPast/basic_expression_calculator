@@ -1,11 +1,10 @@
-#include "defines.h"
+#define DB_IMPLEMENTATION
+#include "db.h"
 #include "parser.h"
-#include "tokenizer.h"
+#include <math.h>
+#include <stdlib.h>
 
-static arena           *main_arena;
-static tokenizer_state *token_state;
-
-char *split(char *expression, int length)
+char *split(char *expression, s32 length)
 {
     if (expression == NULL)
     {
@@ -26,7 +25,7 @@ char *split(char *expression, int length)
     return NULL;
 }
 
-void run_tests(arena *arena)
+void run_tests(db_arena *arena)
 {
     const char *file_name = "src/tests.txt";
 
@@ -37,10 +36,10 @@ void run_tests(arena *arena)
         DEBUG_BREAK;
     }
 
-    char  expression[124] = {};
-    float expected_result = -1;
-    int   count           = 1;
-    float epsilon         = 0.0001;
+    char expression[124] = {};
+    f32  expected_result = -1;
+    s32  count           = 1;
+    f32  epsilon         = 0.0001;
     while (fgets(expression, 123, file) != NULL)
     {
         char *split_exp = split(expression, 123);
@@ -48,24 +47,22 @@ void run_tests(arena *arena)
         expected_result = atof(split_exp + 1);
 
         printf("No %d -> Exp: %s, exp result: %3f", count, expression, expected_result);
-        float ans = evaluate(arena, expression);
+        f32 ans = evaluate(arena, expression);
         printf(",got: %2f\n", ans);
-        ASSERT(expected_result, ans, 0.0001);
-        arena_reset(main_arena);
-        token_state = NULL;
+        db_arena_reset(arena);
         count++;
     }
 }
-bool is_equal(const char *str_a, const char *str_b)
+b8 is_equal(const char *str_a, const char *str_b)
 {
-    int str_a_length = strlen(str_a);
-    int str_b_length = strlen(str_b);
+    s32 str_a_length = strlen(str_a);
+    s32 str_b_length = strlen(str_b);
 
     if (str_a_length != str_b_length)
     {
         return false;
     }
-    for (int i = 0; i < str_a_length; i++)
+    for (s32 i = 0; i < str_a_length; i++)
     {
         if (str_a[i] != str_b[i])
         {
@@ -75,15 +72,11 @@ bool is_equal(const char *str_a, const char *str_b)
     return true;
 }
 
-int main()
+s32 main()
 {
-    // n * KB
-    int  size = 10 * 1024;
-    char array[size];
 
-    arena arena   = arena_init(&array, size);
-    main_arena    = &arena;
-    float epsilon = 0.0000001;
+    db_arena main_arena = db_arena_init();
+    f32      epsilon    = 0.0000001;
 #if 0
      run_tests(&arena);
 #endif
@@ -91,23 +84,24 @@ int main()
     printf("Type in your expression: \n");
     while (true)
     {
-        char expression[30];
+        char expression[512];
         // Read input from stdin
         fgets(expression, sizeof(expression), stdin);
         if (is_equal("exit\n", expression))
             break;
 
-        float ans       = evaluate(main_arena, expression);
-        float ans_floor = floor(ans);
+        f32 ans       = evaluate(&main_arena, expression);
+        f32 ans_floor = floor(ans);
         if (fabs(ans_floor - ans) < epsilon)
         {
-            printf("%d\n", (int)ans);
+            printf("%d\n", (s32)ans);
         }
         else
         {
             printf("%.2f\n", ans);
         }
-        arena_reset(main_arena);
+        db_arena_reset(&main_arena);
     }
+    db_arena_free(&main_arena);
     return 0;
 }

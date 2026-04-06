@@ -1,6 +1,5 @@
 #pragma once
-#include "arena.h"
-#include "defines.h"
+#include "db.h"
 
 #define MAX_TOKEN_ARRAY_COUNT 128
 // I realized we need this because this will keep track of where we are in terms of parsing
@@ -49,8 +48,8 @@ typedef struct tokenizer_state
     int   exp_length;
     int   curr_token;
     int   tokens_length;
-    // if there is a floating point integer then the whole calculator goes into the floating point 
-    int    floating_point;
+    // if there is a floating point integer then the whole calculator goes into the floating point
+    int floating_point;
     // we could do a sliding window approach but since I dont expect anyone to write
     // a mathematical expression larger then 124 characters :)
     token tokens[MAX_TOKEN_ARRAY_COUNT];
@@ -63,4 +62,4 @@ void        token_consume();
 token      *token_peek();
 token      *token_peek_next();
 // this returs false it there was an syntax error  in the expression
-bool init_tokenizer(arena *arena, char *exp);
+b8 init_tokenizer(db_arena *arena, char *exp);
